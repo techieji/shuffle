@@ -1,0 +1,16 @@
+increment =
+    fn x y => {
+        intermediate = x + y;
+        if (x > y) {intermediate + 1} else {
+            intermediate - 0.5
+        }
+    };
+
+main =
+    fn => {
+        x = read-int;
+        y = read-int;
+        intern = increment x y;
+        _ = write-int intern;
+        0
+    };
