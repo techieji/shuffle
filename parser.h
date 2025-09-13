@@ -43,6 +43,8 @@ struct Token lex(char* s);
 struct ASTList;
 struct ASTList_;
 
+struct ValueType;     // Used for semantic analysis
+
 struct ASTList {
     struct ASTList_* first;
     struct ASTList_* last;
@@ -50,6 +52,7 @@ struct ASTList {
 
 struct AST {
     enum TreeType { PROGRAM, STMT, FN_DEF, APPLY, BLOCK, LITERAL, BACKTRACK } type;
+    struct ValueType vtype;
     union {
         struct ASTList children;
         struct Token literal;
@@ -78,3 +81,21 @@ struct AST parse_expr(void);
 struct AST parse_stmt(void);
 struct AST parse_program(void);
 
+// ===== SEMANTIC ANALYSIS ===================
+
+struct TypeList;
+
+struct ValueType {
+    // Need to get better at naming
+    enum TypeKey { INT_TYPE, REAL_TYPE, STR_TYPE, FN_TYPE }
+    // For functions
+    struct TypeList* arguments;
+    struct ValueType result;
+};
+
+struct TypeList {
+    struct ValueType here;
+    struct ValueType* next;
+}
+
+void annotate(struct AST* ast);     // Assigns types to every subexpression

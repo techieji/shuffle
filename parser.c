@@ -101,6 +101,8 @@ const struct AST BACKTRACK_ = { .type = BACKTRACK };
 struct Token ungotten_token[10];     // There's a limit here, but it should be fine...
 int ungotten = 0;
 
+bool debug = true;
+
 char* program_source;
 int i = 0;
 struct Token get_token(void) {
@@ -108,7 +110,7 @@ struct Token get_token(void) {
     struct Token tok = lex(program_source + i);
     i += tok.len;
     if (tok.type == WHITESPACE) return get_token();
-    print_token(tok);
+    if (debug) print_token(tok);
     return tok;
 }
 
@@ -120,7 +122,6 @@ struct ASTList new_ASTList(void) {
     return (struct ASTList){ .first = NULL, .last = NULL };
 }
 
-bool debug = true;
 
 void add_child(struct ASTList* l, struct AST ast) {
     struct ASTList_* elem = malloc(sizeof(struct ASTList_));
@@ -206,9 +207,9 @@ struct AST parse_expr(void) {
     if (debug) puts("trying parse_expr");
     struct AST subtree;
     // TODO rewrite with short circuiting
-    if ((subtree = parse_expr_no_apply()).type != BACKTRACK) return subtree;
-    if ((subtree = parse_apply()).type != BACKTRACK) return subtree;
-    if ((subtree = parse_any_literal()).type != BACKTRACK) return subtree;
+    if (((subtree = parse_expr_no_apply()).type != BACKTRACK)
+            || ((subtree = parse_apply()).type != BACKTRACK)
+            || ((subtree = parse_any_literal()).type != BACKTRACK)) return subtree;
     return BACKTRACK_;
 }
 
@@ -216,12 +217,8 @@ struct AST parse_apply(void) {
     if (debug) puts("trying parse_apply");
     struct ASTList l = new_ASTList();
     struct AST subtree;
-    while (true) {
-        // TODO use short circuiting
-        if ((subtree = parse_any_literal()).type != BACKTRACK) add_child(&l, subtree);
-        else if ((subtree = parse_expr_no_apply()).type != BACKTRACK) add_child(&l, subtree);
-        else break;
-    }
+    while (((subtree = parse_any_literal()).type != BACKTRACK)
+                || ((subtree = parse_expr_no_apply()).type != BACKTRACK)) add_child(&l, subtree);
     return (struct AST){ .type = APPLY, .children = l };
 }
 
